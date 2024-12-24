@@ -1,0 +1,17 @@
+[package]
+name = "bitcoin-simulation-bros"
+version = "0.1.0"
+edition = "2021"
+
+[profile.wasm-release]
+inherits = "release"
+opt-level = 'z'
+lto = true
+codegen-units = 1
+
+[dependencies]
+console_error_panic_hook = "0.1.7"
+leptos = { version = "0.7.2", features = ["csr", "nightly"] }
+leptos_router = "0.7.2"
+chrono = "0.4.39"
+sha2 = "0.10"
