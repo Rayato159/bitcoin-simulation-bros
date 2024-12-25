@@ -6,7 +6,7 @@ use crate::models::transaction::Transaction;
 pub fn generate_random_transactions() -> Vec<Transaction> {
     let mut rng = rand::thread_rng(); // Create the random number generator
 
-    let names = vec![
+    let names = [
         "Satoshi", "Alice", "Bob", "Charlie", "Dave", "Eve", "Frank", "Grace", "Hank", "Ivy",
     ];
 
