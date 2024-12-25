@@ -15,3 +15,5 @@ leptos = { version = "0.7.2", features = ["csr", "nightly"] }
 leptos_router = "0.7.2"
 chrono = "0.4.39"
 sha2 = "0.10"
+rand = { version = "0.8.5", features = ["std"] }
+getrandom = { version = "0.2", features = ["js"] }
