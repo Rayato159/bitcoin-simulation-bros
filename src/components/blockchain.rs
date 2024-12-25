@@ -1,6 +1,7 @@
 use leptos::{logging::log, prelude::*};
 
 use crate::{
+    components::block::Block,
     models::{block_model::BlockModel, coin_base::CoinBase, hashing_model::HashingModel},
     utils::generate_random_transactions,
 };
@@ -9,85 +10,86 @@ const DIFFICULTY: usize = 4;
 const INIT_MINING_REWARD: f64 = 50.0;
 const DECRESE_RATE: f64 = 0.5;
 
+#[derive(Debug, Clone)]
+pub struct MiningArgs {
+    pub blocks: Vec<BlockModel>,
+}
+
 #[component]
 pub fn Blockchain() -> impl IntoView {
     let (blocks, set_blocks) = signal(vec![BlockModel::create_genesis_block()]);
 
-    let handle_mining = move |_| {
+    let mining_action = Action::new(move |args: &MiningArgs| {
         let target = "0".repeat(DIFFICULTY);
+        let mut blocks_stack = args.blocks.clone();
 
-        let mut blocks_stack = blocks.get();
+        async move {
+            if let Some(last_block_index) = blocks_stack.len().checked_sub(1) {
+                loop {
+                    {
+                        let last_block = &mut blocks_stack[last_block_index];
 
-        if let Some(last_block) = blocks_stack.last_mut() {
-            last_block.timestamp = chrono::Utc::now().timestamp() as u64;
-            last_block.nonce = 0;
-            last_block.hash = "0".repeat(64);
-
-            loop {
-                let hashing_model = HashingModel {
-                    index: last_block.index,
-                    nonce: last_block.nonce,
-                    coin_base: last_block.coin_base.clone(),
-                    transactions: last_block.transactions.clone(),
-                    timestamp: last_block.timestamp,
-                    previous_hash: last_block.previous_hash.clone(),
-                };
-
-                let hash = hashing_model.hash_calulation();
-
-                log!("Mining... nonce: {:?}, {:?}", last_block.nonce, hash);
-
-                if hash.starts_with(&target) {
-                    last_block.hash = hash.clone();
-
-                    if last_block.index % 4 == 0 {
-                        let reward =
-                            last_block.coin_base.reward - (INIT_MINING_REWARD * DECRESE_RATE);
-
-                        let new_block = BlockModel {
-                            index: last_block.index + 1,
-                            nonce: 0,
-                            coin_base: CoinBase {
-                                miner: "Lookhin".to_string(),
-                                reward,
-                            },
-                            transactions: generate_random_transactions(),
-                            timestamp: chrono::Utc::now().timestamp() as u64,
-                            previous_hash: hash,
-                            hash: "0".repeat(64),
+                        let hashing_model = HashingModel {
+                            index: last_block.index,
+                            nonce: last_block.nonce,
+                            coin_base: last_block.coin_base.clone(),
+                            transactions: last_block.transactions.clone(),
+                            timestamp: last_block.timestamp,
+                            previous_hash: last_block.previous_hash.clone(),
                         };
 
-                        blocks_stack.push(new_block);
-                        set_blocks(blocks_stack);
+                        let hash = hashing_model.hash_calulation();
+                        last_block.hash = hash.clone();
 
-                        break;
-                    } else {
-                        let reward = last_block.coin_base.reward;
+                        log!("Mining... nonce: {:?}, hash: {:?}", last_block.nonce, hash);
 
-                        let new_block = BlockModel {
-                            index: last_block.index + 1,
-                            nonce: 0,
-                            coin_base: CoinBase {
-                                miner: "Lookhin".to_string(),
-                                reward,
-                            },
-                            transactions: generate_random_transactions(),
-                            timestamp: chrono::Utc::now().timestamp() as u64,
-                            previous_hash: hash,
-                            hash: "0".repeat(64),
-                        };
+                        if hash.starts_with(&target) {
+                            let reward = if last_block.index % 4 == 0 {
+                                last_block.coin_base.reward - (INIT_MINING_REWARD * DECRESE_RATE)
+                            } else {
+                                last_block.coin_base.reward
+                            };
 
-                        blocks_stack.push(new_block);
-                        set_blocks(blocks_stack);
+                            let new_block = BlockModel {
+                                index: last_block.index + 1,
+                                nonce: 0,
+                                coin_base: CoinBase {
+                                    miner: "Lookhin".to_string(),
+                                    reward,
+                                },
+                                transactions: generate_random_transactions(),
+                                timestamp: chrono::Utc::now().timestamp() as u64,
+                                previous_hash: hash.clone(),
+                                hash: "0".repeat(64),
+                            };
 
-                        break;
+                            blocks_stack.push(new_block);
+                            set_blocks(blocks_stack.clone());
+                            break;
+                        }
+
+                        last_block.nonce += 1;
                     }
                 }
-
-                last_block.nonce += 1;
             }
+
+            blocks_stack
         }
+    });
+
+    // Dispatch the action
+    let handle_mining = move |_| {
+        let args = MiningArgs {
+            blocks: blocks.get().clone(),
+        };
+        mining_action.dispatch(args);
     };
+
+    Effect::new(move |_| {
+        if let Some(updated_blocks) = mining_action.value().get() {
+            set_blocks(updated_blocks.clone());
+        }
+    });
 
     view! {
         <div class="max-w-full md:px-6 py-3 px-3">
@@ -96,51 +98,20 @@ pub fn Blockchain() -> impl IntoView {
                 key=|block| block.index
                 let:block
             >
-                <div class="flex flex-col space-x-4 my-4 border-2 border-white p-4">
-                    <div class="flex flex-col space-y-2">
-                        <div class="flex flex-row items-center space-x-2">
-                            <span class="font-bold p-1">Index:</span>
-                            <span class="p-1">{block.index}</span>
+                <Block block_model=block />
+            </For>
+            <div class="flex flex-row justify-center items-center w-full bg-orange-400 hover:bg-orange-300 border-none rounded-md p-2">
+                <button on:click=handle_mining>
+                    <div class="flex flex-row justify-center items-center space-x-2">
+                        <div>
+                            <img src="./assets/Mining.png" alt="Mining" class="max-w-[32px] max-h-[32px]" />
                         </div>
-                        <div class="flex flex-row items-center space-x-2">
-                            <span class="font-bold p-1">Nonce:</span>
-                            <span class="p-1">{block.nonce}</span>
-                        </div>
-                        <div class="flex flex-row items-center space-x-2">
-                            <span class="font-bold p-1">Coin Base:</span>
-                            <span class="p-1">{block.coin_base.miner.clone()} -> <span class="font-semibold">{format!("{:.2}", block.coin_base.reward)} BTC</span></span>
-                        </div>
-                        <div class="flex flex-col justify-center space-x-2">
-                            <span class="font-bold p-1">Transactions:</span>
-                            <For
-                                each=move || block.transactions.clone()
-                                key=|t| format!("{}-{}-{}", t.timestamp, t.sender, t.receiver)
-                                let:t
-                            >
-                                <li class="md:text-base text-sm font-light">
-                                    <span>{t.sender.clone()} -> {t.receiver.clone()}:</span>
-                                    <span class="font-semibold ml-2">{format!("{:.2}", t.amount)} BTC</span>
-                                </li>
-                            </For>
-                        </div>
-                        <div class="flex flex-row items-center space-x-2">
-                            <span class="font-bold p-1">Timestamp:</span>
-                            <span class="p-1">{block.timestamp}</span>
-                        </div>
-                        <div class="flex flex-row items-center space-x-2">
-                            <span class="font-bold p-1">Previous Hash:</span>
-                            <span class="p-1">{block.previous_hash.clone()}</span>
-                        </div>
-                        <div class="flex flex-row items-center space-x-2">
-                            <span class="font-bold p-1">Hash:</span>
-                            <span class="p-1">{block.hash.clone()}</span>
-                        </div>
-                        <div class="flex flex-row items-center space-x-2">
-                            <button on:click=handle_mining class="ml-1 bg-orange-400 border-none rounded-md p-2 font-semibold mt-2">Start Mining</button>
+                        <div class="font-semibold">
+                            Start Mining
                         </div>
                     </div>
-                </div>
-            </For>
+                </button>
+            </div>
         </div>
     }
 }
