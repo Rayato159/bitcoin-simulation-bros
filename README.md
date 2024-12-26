@@ -1,8 +1,7 @@
 # Bitcoin Simulation Bros
 
-<img src="./assets/Bitcoin.png" width="64"> <img src="./assets/Bitcoin.png" width="64"> <img src="./assets/Bitcoin.png" width="64">
+![alt text](./assets/ScreenShot.png)
 
-<br>
 A lightweight and interactive web-based Bitcoin blockchain simulation. This project demonstrates the core mechanics of blockchain mining, transaction processing, and hash calculation in a fun and educational way.
 
 ## 🌟 Features
