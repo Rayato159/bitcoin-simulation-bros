@@ -19,77 +19,57 @@ pub struct MiningArgs {
 pub fn Blockchain() -> impl IntoView {
     let (blocks, set_blocks) = signal(vec![BlockModel::create_genesis_block()]);
 
-    let mining_action = Action::new(move |args: &MiningArgs| {
+    let handle_mining = move |_| {
         let target = "0".repeat(DIFFICULTY);
-        let mut blocks_stack = args.blocks.clone();
+        let mut blocks_stack = blocks.get().clone();
 
-        async move {
-            if let Some(last_block_index) = blocks_stack.len().checked_sub(1) {
-                loop {
-                    {
-                        let last_block = &mut blocks_stack[last_block_index];
+        if let Some(last_block) = blocks_stack.last_mut() {
+            loop {
+                let hashing_model = HashingModel {
+                    index: last_block.index,
+                    nonce: last_block.nonce,
+                    coin_base: last_block.coin_base.clone(),
+                    transactions: last_block.transactions.clone(),
+                    timestamp: last_block.timestamp,
+                    previous_hash: last_block.previous_hash.clone(),
+                };
 
-                        let hashing_model = HashingModel {
-                            index: last_block.index,
-                            nonce: last_block.nonce,
-                            coin_base: last_block.coin_base.clone(),
-                            transactions: last_block.transactions.clone(),
-                            timestamp: last_block.timestamp,
-                            previous_hash: last_block.previous_hash.clone(),
-                        };
+                let hash = hashing_model.hash_calulation();
+                last_block.hash = hash.clone();
 
-                        let hash = hashing_model.hash_calulation();
-                        last_block.hash = hash.clone();
+                log!("Mining... nonce: {:?}, hash: {:?}", last_block.nonce, hash);
 
-                        log!("Mining... nonce: {:?}, hash: {:?}", last_block.nonce, hash);
+                if hash.starts_with(&target) {
+                    let reward = if last_block.index % 4 == 0 {
+                        last_block.coin_base.reward - (INIT_MINING_REWARD * DECRESE_RATE)
+                    } else {
+                        last_block.coin_base.reward
+                    };
 
-                        if hash.starts_with(&target) {
-                            let reward = if last_block.index % 4 == 0 {
-                                last_block.coin_base.reward - (INIT_MINING_REWARD * DECRESE_RATE)
-                            } else {
-                                last_block.coin_base.reward
-                            };
+                    let new_block = BlockModel {
+                        index: last_block.index + 1,
+                        nonce: 0,
+                        coin_base: CoinBase {
+                            miner: "Lookhin".to_string(),
+                            reward,
+                        },
+                        transactions: generate_random_transactions(),
+                        timestamp: chrono::Utc::now().timestamp() as u64,
+                        previous_hash: hash.clone(),
+                        hash: "0".repeat(64),
+                    };
 
-                            let new_block = BlockModel {
-                                index: last_block.index + 1,
-                                nonce: 0,
-                                coin_base: CoinBase {
-                                    miner: "Lookhin".to_string(),
-                                    reward,
-                                },
-                                transactions: generate_random_transactions(),
-                                timestamp: chrono::Utc::now().timestamp() as u64,
-                                previous_hash: hash.clone(),
-                                hash: "0".repeat(64),
-                            };
-
-                            blocks_stack.push(new_block);
-                            set_blocks(blocks_stack.clone());
-                            break;
-                        }
-
-                        last_block.nonce += 1;
-                    }
+                    blocks_stack.push(new_block);
+                    set_blocks(blocks_stack.clone());
+                    break;
                 }
+
+                last_block.nonce += 1;
             }
 
-            blocks_stack
+            log!("Blocks State {:#?}", blocks.get());
         }
-    });
-
-    // Dispatch the action
-    let handle_mining = move |_| {
-        let args = MiningArgs {
-            blocks: blocks.get().clone(),
-        };
-        mining_action.dispatch(args);
     };
-
-    Effect::new(move |_| {
-        if let Some(updated_blocks) = mining_action.value().get() {
-            set_blocks(updated_blocks.clone());
-        }
-    });
 
     view! {
         <div class="max-w-full md:px-6 py-3 px-3">
