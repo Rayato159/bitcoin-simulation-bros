@@ -60,8 +60,7 @@ pub fn mine_block(last_block: &mut BlockModel) -> BlockModel {
 
         if hash.starts_with(&target) {
             let reward = if last_block.index % 4 == 0 {
-                let decrease_factor = 2f64.powi((last_block.index / 4) as i32);
-                last_block.coin_base.reward / decrease_factor
+                last_block.coin_base.reward / 2.
             } else {
                 last_block.coin_base.reward
             };
