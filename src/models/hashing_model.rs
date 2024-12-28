@@ -15,21 +15,21 @@ impl HashingModel {
     pub fn hash_calulation(&self) -> String {
         let mut hasher = Sha256::new();
 
-        let transaction_data: String = self
-            .transactions
-            .iter()
-            .map(|transaction| {
-                format!(
-                    "{}{}{}{}{}{}",
-                    transaction.sender,
-                    transaction.receiver,
-                    transaction.amount,
-                    transaction.fee,
-                    transaction.signature,
-                    transaction.timestamp
-                )
-            })
-            .collect::<String>();
+        let transaction_data: String =
+            self.transactions
+                .iter()
+                .fold(String::new(), |mut acc, transaction| {
+                    acc.push_str(&format!(
+                        "{}{}{}{}{}{}",
+                        transaction.sender,
+                        transaction.receiver,
+                        transaction.amount,
+                        transaction.fee,
+                        transaction.signature,
+                        transaction.timestamp
+                    ));
+                    acc
+                });
 
         hasher.update(format!(
             "{}{}{}{}{}{}{}",
