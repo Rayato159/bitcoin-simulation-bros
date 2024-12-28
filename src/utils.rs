@@ -7,8 +7,6 @@ use crate::models::{
 };
 
 const DIFFICULTY: usize = 4;
-const INIT_MINING_REWARD: f64 = 50.0;
-const DECRESE_RATE: f64 = 0.5;
 
 pub fn generate_random_transactions() -> Vec<Transaction> {
     let mut rng = rand::thread_rng(); // Create the random number generator
@@ -62,7 +60,8 @@ pub fn mine_block(last_block: &mut BlockModel) -> BlockModel {
 
         if hash.starts_with(&target) {
             let reward = if last_block.index % 4 == 0 {
-                last_block.coin_base.reward - (INIT_MINING_REWARD * DECRESE_RATE)
+                let decrease_factor = 2f64.powi((last_block.index / 4) as i32);
+                last_block.coin_base.reward / decrease_factor
             } else {
                 last_block.coin_base.reward
             };

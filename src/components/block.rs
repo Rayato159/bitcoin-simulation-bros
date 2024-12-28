@@ -17,7 +17,7 @@ pub fn Block(block_model: BlockModel) -> impl IntoView {
                 </div>
                 <div class="flex flex-row items-center space-x-2">
                     <span class="font-bold p-1">Coin Base:</span>
-                    <span class="p-1">{block_model.coin_base.miner.clone()} -> <span class="font-semibold">{format!("{:.2}", block_model.coin_base.reward)} BTC</span></span>
+                    <span class="p-1">{block_model.coin_base.miner.clone()} -> <span class="font-semibold">{format!("{:.8}", block_model.coin_base.reward)} BTC</span></span>
                 </div>
                 <div class="flex flex-col justify-center space-x-2">
                     <span class="font-bold p-1">Transactions:</span>
@@ -28,7 +28,7 @@ pub fn Block(block_model: BlockModel) -> impl IntoView {
                     >
                         <li class="md:text-base text-sm font-light">
                             <span>{t.sender.clone()} -> {t.receiver.clone()}:</span>
-                            <span class="font-semibold ml-2">{format!("{:.2}", t.amount)} BTC</span>
+                            <span class="font-semibold ml-2">{format!("{:.8}", t.amount)} BTC</span>
                         </li>
                     </For>
                 </div>

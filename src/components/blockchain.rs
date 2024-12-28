@@ -1,4 +1,4 @@
-use leptos::{logging::log, prelude::*};
+use leptos::prelude::*;
 
 use crate::{components::block::Block, models::block_model::BlockModel, utils::mine_block};
 
@@ -13,8 +13,6 @@ pub fn Blockchain() -> impl IntoView {
             let new_block = mine_block(last_block);
             blocks_stack.push(new_block);
             set_blocks(blocks_stack.clone());
-
-            log!("Blocks {:#?}", blocks.get());
         }
     };
 
