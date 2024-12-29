@@ -20,13 +20,12 @@ impl HashingModel {
                 .iter()
                 .fold(String::new(), |mut acc, transaction| {
                     acc.push_str(&format!(
-                        "{}{}{}{}{}{}",
+                        "{}{}{}{}{}",
                         transaction.sender,
                         transaction.receiver,
                         transaction.amount,
                         transaction.fee,
                         transaction.signature,
-                        transaction.timestamp
                     ));
                     acc
                 });

@@ -1,4 +1,3 @@
-use chrono::Utc;
 use rand::{distributions::Alphanumeric, Rng};
 
 use crate::models::{
@@ -36,7 +35,6 @@ pub fn generate_random_transactions() -> Vec<Transaction> {
                 signature: (0..64) // Generate a random 64-character alphanumeric signature
                     .map(|_| rng.sample(Alphanumeric) as char)
                     .collect(),
-                timestamp: Utc::now().timestamp() as u64, // Current timestamp
             }
         })
         .collect()

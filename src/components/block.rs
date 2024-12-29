@@ -23,7 +23,7 @@ pub fn Block(block_model: BlockModel) -> impl IntoView {
                     <span class="font-bold p-1">Transactions:</span>
                     <For
                         each=move || block_model.transactions.clone()
-                        key=|t| format!("{}-{}-{}", t.timestamp, t.sender, t.receiver)
+                        key=|t| t.signature.clone()
                         let:t
                     >
                         <li class="md:text-base text-sm font-light">

@@ -5,5 +5,4 @@ pub struct Transaction {
     pub amount: f64,
     pub fee: f64,
     pub signature: String,
-    pub timestamp: u64,
 }
